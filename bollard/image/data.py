@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 __cache_image_data = {}
 
 
-def get_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> list[str]:
+def list_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> list[str]:
     args = ["images", "--quiet", "--no-trunc"]
     if incl_interm_img:
         args += ["--all"]
@@ -19,7 +19,7 @@ def get_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> lis
     return data_str.splitlines()
 
 
-def get_image_data(image_ids: list[str]) -> list[dict[str, Any]]:
+def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
     """Wrap `docker inspect` command and cache the result."""
     global __cache_image_data
     import json

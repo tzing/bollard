@@ -52,11 +52,11 @@ group.add_alias("rmi", ["rm"])
 
 
 def select_images(selectors: Sequence[str]) -> list[str]:
-    from bollard.image.data import get_image_data, get_image_ids
+    from bollard.image.data import inspect_image, list_image_ids
     from bollard.image.selector import is_image_match_selector
 
     selected = []
-    for data in get_image_data(get_image_ids()):
+    for data in inspect_image(list_image_ids()):
         for selector in selectors:
             if is_image_match_selector(data, selector):
                 selected.append(data["Id"])

@@ -7,9 +7,9 @@ import bollard.image.rm as t
 
 def test_select_images():
     with (
-        patch("bollard.image.data.get_image_ids"),
+        patch("bollard.image.data.list_image_ids"),
         patch(
-            "bollard.image.data.get_image_data",
+            "bollard.image.data.inspect_image",
             return_value=[
                 {"Id": "sha256:aaaa", "RepoTags": ["test:latest"]},
                 {"Id": "sha256:bbbb", "RepoTags": ["foo:latest"]},

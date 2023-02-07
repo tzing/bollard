@@ -272,19 +272,19 @@ def list_images_fallback(values: dict) -> NoReturn:
 def select_images(
     selectors: Sequence[str], incl_interm_img: bool, filters: Sequence[str]
 ) -> list[str]:
-    from bollard.image.data import get_image_data, get_image_ids
+    from bollard.image.data import inspect_image, list_image_ids
     from bollard.image.selector import is_image_match_selector
 
     # get all image list
     if filters:
-        image_ids = get_image_ids(incl_interm_img=incl_interm_img, filters=filters)
+        image_ids = list_image_ids(incl_interm_img=incl_interm_img, filters=filters)
     else:
-        image_ids = get_image_ids(incl_interm_img=incl_interm_img)
+        image_ids = list_image_ids(incl_interm_img=incl_interm_img)
 
     # apply selectors
     if selectors:
         selected = []
-        for data in get_image_data(image_ids):
+        for data in inspect_image(image_ids):
             is_match = True
             for selector in selectors:
                 if not is_image_match_selector(data, selector):
@@ -303,7 +303,7 @@ def collect_fields(
     import bollard.image.data
 
     # query once for caching the data
-    bollard.image.data.get_image_data(image_ids)
+    bollard.image.data.inspect_image(image_ids)
 
     output = []
     for id_ in image_ids:
@@ -327,7 +327,7 @@ def get_field_data(
         split_repo_tag,
     )
 
-    (data,) = bollard.image.data.get_image_data([image_id])
+    (data,) = bollard.image.data.inspect_image([image_id])
     match column:
         case "architecture":
             yield highlight_arch(data["Architecture"])

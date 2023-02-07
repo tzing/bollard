@@ -42,11 +42,11 @@ def test_list_images_fallback():
 def test_select_images():
     with (
         patch(
-            "bollard.image.data.get_image_ids",
+            "bollard.image.data.list_image_ids",
             return_value=["sha256:aaaa", "sha256:bbbb", "sha256:cccc"],
         ),
         patch(
-            "bollard.image.data.get_image_data",
+            "bollard.image.data.inspect_image",
             return_value=[
                 {"Id": "sha256:aaaa", "RepoTags": ["test:latest"]},
                 {"Id": "sha256:bbbb", "RepoTags": ["foo:latest"]},
