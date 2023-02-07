@@ -61,11 +61,30 @@ def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
                 "Architecture": "arm64",
                 "Os": "linux",
             }
+        if "sha256:bbbb" in ids:
+            yield {
+                "Id": "sha256:bbbb",
+                "RepoTags": ["example.com/bar:1.0"],
+            }
 
     monkeypatch.setattr("bollard.image.data.inspect_image", mock_inspect)
 
     with freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8):
         yield
+
+
+@pytest.mark.usefixtures("_patch_inspect")
+def test_collect_fields():
+    assert t.collect_fields(["sha256:aaaa", "sha256:bbbb"], ["id", "repo_tag"], {}) == [
+        {
+            "id": ["aaaa"],
+            "repo_tag": ["name:latest", "example.com/foo:2023.2.0"],
+        },
+        {
+            "id": ["bbbb"],
+            "repo_tag": ["example.com/bar:1.0"],
+        },
+    ]
 
 
 @pytest.mark.parametrize(
