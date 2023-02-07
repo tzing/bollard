@@ -48,7 +48,26 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
     assert "No such image: sha256:dddddddd" in caplog.text
 
 
-@freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8)
+@pytest.fixture()
+def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
+    def mock_inspect(ids: list[str]):
+        if "sha256:aaaa" in ids:
+            yield {
+                "Id": "sha256:aaaa",
+                "Created": "2023-04-05T06:07:05.910Z",
+                "RepoDigests": ["example.com/name@sha256:bbbb"],
+                "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
+                "Size": 1234,
+                "Architecture": "arm64",
+                "Os": "linux",
+            }
+
+    monkeypatch.setattr("bollard.image.data.inspect_image", mock_inspect)
+
+    with freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8):
+        yield
+
+
 @pytest.mark.parametrize(
     ("column", "output"),
     [
@@ -67,22 +86,9 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
         ("tag", ["latest", "2023.2.0"]),
     ],
 )
+@pytest.mark.usefixtures("_patch_inspect")
 def test_get_field_data(column: str, output: list):
-    with patch(
-        "bollard.image.data.inspect_image",
-        return_value=[
-            {
-                "Id": "sha256:aaaa",
-                "Created": "2023-04-05T06:07:05.910Z",
-                "RepoDigests": ["example.com/name@sha256:bbbb"],
-                "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
-                "Size": 1234,
-                "Architecture": "arm64",
-                "Os": "linux",
-            }
-        ],
-    ):
-        assert list(t.get_field_data("sha256:aaaa", column, {})) == output
+    assert list(t.get_field_data("sha256:aaaa", column, {})) == output
 
 
 def test_format_architecture(monkeypatch: pytest.MonkeyPatch):

@@ -57,6 +57,24 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
     return output
 
 
+def collect_fields(
+    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any]
+) -> list[dict[str, list[str]]]:
+    """Collect image data into dicts."""
+    # query once for caching the data in memory
+    inspect_image(image_ids)
+
+    # collect fields
+    collected = []
+    for id_ in image_ids:
+        data = {}
+        for col in columns:
+            data[col] = list(get_field_data(id_, col, formats))
+        collected.append(data)
+
+    return collected
+
+
 def get_field_data(
     image_id: str, column: str, formats: dict[str, Any]
 ) -> Iterator[str]:
