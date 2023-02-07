@@ -1,5 +1,7 @@
 import logging
-from typing import Any
+from typing import Any, Iterator, Sequence
+
+import click
 
 from bollard.utils import check_docker_output
 
@@ -53,3 +55,14 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
             logger.warning("No such image: %s", id_)
 
     return output
+
+
+def format_architecture(arch: str, formats: dict[str, Any]) -> str:
+    import platform
+
+    do = formats.get("highlight_architecture", True)
+
+    if not do or platform.machine().upper() == arch.upper():
+        return arch
+
+    return click.style(arch, fg="yellow", bold=True)

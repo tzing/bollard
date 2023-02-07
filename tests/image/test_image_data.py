@@ -1,6 +1,7 @@
 import re
 from unittest.mock import patch
 
+import click
 import pytest
 
 import bollard.image.data as t
@@ -44,3 +45,13 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
 
     # check warning
     assert "No such image: sha256:dddddddd" in caplog.text
+
+
+def test_format_architecture(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("platform.machine", lambda: "amd64")
+
+    assert t.format_architecture("amd64", {}) == "amd64"
+    assert t.format_architecture("test", {"highlight_architecture": False}) == "test"
+
+    colored = click.style("test", fg="yellow", bold=True)
+    assert t.format_architecture("test", {}) == colored

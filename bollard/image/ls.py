@@ -378,15 +378,6 @@ def get_field_data(
             logger.critical("Internal error - Unmapped column %s", column)
 
 
-def highlight_arch(arch: str) -> str:
-    """Highlight arch string if it does not match current machine"""
-    import platform
-
-    if platform.machine().upper() == arch.upper():
-        return arch
-    return click.style(arch, fg="yellow", bold=True)
-
-
 def explode_dict(compressed_dict: list[dict]) -> list[dict[str, str]]:
     output = []
     for data in compressed_dict:
