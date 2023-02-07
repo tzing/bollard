@@ -61,8 +61,13 @@ def format_architecture(arch: str, formats: dict[str, Any]) -> str:
     import platform
 
     do = formats.get("highlight_architecture", True)
-
     if not do or platform.machine().upper() == arch.upper():
         return arch
-
     return click.style(arch, fg="yellow", bold=True)
+
+
+def format_digest(digest: str, formats: dict[str, Any]) -> str:
+    import bollard.utils
+
+    short = formats.get("short_digest", True)
+    return bollard.utils.format_digest(digest, short)

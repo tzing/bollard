@@ -20,11 +20,8 @@ def test_format_relative_time():
 
 def test_format_digest():
     digest = "sha256:1234567890ffffffffff1234567890ffffffffff1234567890ffffffffff1234"
-    assert (
-        t.format_digest(digest, True)
-        == "sha256:1234567890ffffffffff1234567890ffffffffff1234567890ffffffffff1234"
-    )
-    assert t.format_digest(digest, False) == "1234567890ff"
+    assert t.format_digest(digest, True) == "1234567890ff"
+    assert t.format_digest(digest, False) == digest
 
 
 def test_format_size():
