@@ -2,6 +2,7 @@ import re
 from unittest.mock import patch
 
 import click
+import freezegun
 import pytest
 
 import bollard.image.data as t
@@ -45,6 +46,43 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
 
     # check warning
     assert "No such image: sha256:dddddddd" in caplog.text
+
+
+@freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8)
+@pytest.mark.parametrize(
+    ("column", "output"),
+    [
+        ("architecture", ["arm64"]),
+        ("created:iso", ["2023-04-05T14:07:05+08:00"]),
+        ("created", ["3 seconds ago"]),
+        ("digest", ["bbbb"]),
+        ("id", ["aaaa"]),
+        ("name", ["name", "foo"]),
+        ("os", ["linux"]),
+        ("platform", ["linux/arm64"]),
+        ("registry", ["", "example.com"]),
+        ("repo_tag", ["name:latest", "example.com/foo:2023.2.0"]),
+        ("repository", ["name", "example.com/foo"]),
+        ("size", ["1.2 kB"]),
+        ("tag", ["latest", "2023.2.0"]),
+    ],
+)
+def test_get_field_data(column: str, output: list):
+    with patch(
+        "bollard.image.data.inspect_image",
+        return_value=[
+            {
+                "Id": "sha256:aaaa",
+                "Created": "2023-04-05T06:07:05.910Z",
+                "RepoDigests": ["example.com/name@sha256:bbbb"],
+                "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
+                "Size": 1234,
+                "Architecture": "arm64",
+                "Os": "linux",
+            }
+        ],
+    ):
+        assert list(t.get_field_data("sha256:aaaa", column, {})) == output
 
 
 def test_format_architecture(monkeypatch: pytest.MonkeyPatch):

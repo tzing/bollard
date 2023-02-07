@@ -57,6 +57,67 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
     return output
 
 
+def get_field_data(
+    image_id: str, column: str, formats: dict[str, Any]
+) -> Iterator[str]:
+    from bollard.utils import (
+        format_iso_time,
+        format_relative_time,
+        format_size,
+        split_repo_tag,
+    )
+
+    (data,) = inspect_image([image_id])
+    match column:
+        case "architecture":
+            yield format_architecture(data["Architecture"], formats)
+        case "created:iso":
+            yield format_iso_time(data["Created"])
+        case "created":
+            yield format_relative_time(data["Created"])
+        case "digest":
+            for d in data["RepoDigests"]:
+                _, digest = d.split("@", maxsplit=1)
+                yield format_digest(digest, formats)
+        case "id":
+            yield format_digest(data["Id"], formats)
+        case "name":
+            for s in data["RepoTags"]:
+                _, name, _ = split_repo_tag(s)
+                yield name
+        case "os":
+            yield data["Os"]
+        case "platform":
+            (arch,) = get_field_data(image_id, "architecture", formats)
+            (os,) = get_field_data(image_id, "os", formats)
+            yield f"{os}/{arch}"
+        case "registry":
+            for s in data["RepoTags"]:
+                registry, _, _ = split_repo_tag(s)
+                yield registry
+        case "repo_tag":
+            for repo, tag in zip(
+                get_field_data(image_id, "repository", formats),
+                get_field_data(image_id, "tag", formats),
+            ):
+                yield f"{repo}:{tag}"
+        case "repository":
+            for s in data["RepoTags"]:
+                registry, name, _ = split_repo_tag(s)
+                if registry:
+                    yield f"{registry}/{name}"
+                else:
+                    yield name
+        case "size":
+            yield format_size(data["Size"])
+        case "tag":
+            for s in data["RepoTags"]:
+                _, _, tag = split_repo_tag(s)
+                yield tag
+        case _:
+            logger.critical("Internal error - Unmapped column %s", column)
+
+
 def format_architecture(arch: str, formats: dict[str, Any]) -> str:
     import platform
 
