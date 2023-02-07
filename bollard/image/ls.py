@@ -297,33 +297,6 @@ def select_images(
     return image_ids
 
 
-def explode_dict(compressed_dict: list[dict]) -> list[dict[str, str]]:
-    output = []
-    for data in compressed_dict:
-        # categorize
-        col_unique = {}
-        col_zipped = {}
-        for c, v in data.items():
-            if not v:
-                col_unique[c] = None
-            elif len(v) == 1:
-                (col_unique[c],) = v
-            else:
-                col_zipped[c] = v
-
-        # explode
-        if col_zipped:
-            for fv in itertools.zip_longest(*col_zipped.values()):
-                d = col_unique.copy()
-                for c, v in zip(col_zipped, fv):
-                    d[c] = v
-                output.append(d)
-        else:
-            output.append(col_unique)
-
-    return output
-
-
 def parse_top_n_arg(selectors: Sequence[str]) -> tuple[Sequence[str], int]:
     """Parse the `~n` argument, remove it from selectors."""
     import re

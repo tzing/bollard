@@ -59,12 +59,14 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
 
 def collect_fields(
     image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any]
-) -> list[dict[str, list[str]]]:
+) -> list[dict[str, str]]:
     """Collect image data into dicts."""
+    import itertools
+
     # query once for caching the data in memory
     inspect_image(image_ids)
 
-    # collect fields
+    # collect field data
     collected = []
     for id_ in image_ids:
         data = {}
@@ -72,7 +74,31 @@ def collect_fields(
             data[col] = list(get_field_data(id_, col, formats))
         collected.append(data)
 
-    return collected
+    # explode nested list into multiple rows
+    output = []
+    for data in collected:
+        # categorize
+        col_unique = {}
+        col_zipped = {}
+        for c, v in data.items():
+            if not v:
+                col_unique[c] = None
+            elif len(v) == 1:
+                (col_unique[c],) = v
+            else:
+                col_zipped[c] = v
+
+        # explode
+        if col_zipped:
+            for fv in itertools.zip_longest(*col_zipped.values()):
+                d = col_unique.copy()
+                for c, v in zip(col_zipped, fv):
+                    d[c] = v
+                output.append(d)
+        else:
+            output.append(col_unique)
+
+    return output
 
 
 def get_field_data(

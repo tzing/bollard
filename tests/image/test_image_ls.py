@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import freezegun
 import pytest
 
 import bollard.image.ls as t
@@ -63,20 +62,6 @@ def test_select_images():
             "sha256:aaaa",
             "sha256:bbbb",
         ]
-
-
-def test_explode_dict():
-    rv = t.explode_dict(
-        [
-            {"foo": [], "bar": ["baz"]},
-            {"foo": ["test"], "bar": ["baz", "qax"]},
-        ]
-    )
-    assert rv == [
-        {"foo": None, "bar": "baz"},
-        {"foo": "test", "bar": "baz"},
-        {"foo": "test", "bar": "qax"},
-    ]
 
 
 def test_parse_top_n_arg():

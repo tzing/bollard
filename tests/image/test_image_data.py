@@ -64,8 +64,14 @@ def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
         if "sha256:bbbb" in ids:
             yield {
                 "Id": "sha256:bbbb",
-                "RepoTags": ["example.com/bar:1.0"],
+                "RepoTags": ["bar:latest", "bar:1.0", "example.com/bar:1.0"],
+                "RepoDigests": [
+                    "foo.example.com/foo@sha256:ffff",
+                    "bar.example.com/bar@sha256:eeee",
+                ],
             }
+        if "sha256:cccc" in ids:
+            yield {"Id": "sha256:cccc", "RepoTags": ["qaz:latest"], "RepoDigests": []}
 
     monkeypatch.setattr("bollard.image.data.inspect_image", mock_inspect)
 
@@ -75,14 +81,38 @@ def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.usefixtures("_patch_inspect")
 def test_collect_fields():
-    assert t.collect_fields(["sha256:aaaa", "sha256:bbbb"], ["id", "repo_tag"], {}) == [
+    assert t.collect_fields(
+        ["sha256:aaaa", "sha256:bbbb", "sha256:cccc"], ["id", "repo_tag", "digest"], {}
+    ) == [
         {
-            "id": ["aaaa"],
-            "repo_tag": ["name:latest", "example.com/foo:2023.2.0"],
+            "id": "aaaa",
+            "repo_tag": "name:latest",
+            "digest": "bbbb",
         },
         {
-            "id": ["bbbb"],
-            "repo_tag": ["example.com/bar:1.0"],
+            "id": "aaaa",
+            "repo_tag": "example.com/foo:2023.2.0",
+            "digest": "bbbb",
+        },
+        {
+            "id": "bbbb",
+            "repo_tag": "bar:latest",
+            "digest": "ffff",
+        },
+        {
+            "id": "bbbb",
+            "repo_tag": "bar:1.0",
+            "digest": "eeee",
+        },
+        {
+            "id": "bbbb",
+            "repo_tag": "example.com/bar:1.0",
+            "digest": None,
+        },
+        {
+            "id": "cccc",
+            "repo_tag": "qaz:latest",
+            "digest": None,
         },
     ]
 
