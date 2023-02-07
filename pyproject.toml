@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bollard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Wrapper for docker command that provide handful options and alias"
 authors = ["Tzu-Ting <tzingshih@gmail.com>"]
 license = "Apache-2.0"

@@ -198,6 +198,9 @@ def list_images(
     print_table(columns, data)
 
 
+group.add_alias("list", ["ls"])
+
+
 _DOCKER_OPTIONS = [
     click.Option(["-a", "--all"], is_flag=True, help="Show intermediate images"),
     click.Option(["--digests"], is_flag=True, help="Show digests"),

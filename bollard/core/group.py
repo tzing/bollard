@@ -1,6 +1,7 @@
 import logging
 import sys
 import typing
+from typing import Sequence
 
 import click
 
@@ -36,8 +37,8 @@ class BollardGroup(click.Group):
             return cmd.name, cmd, args[1:]
 
         # check alias table
-        if alias := self.aliases.get(cmd_name):
-            args_extended = list(alias) + args[1:]
+        if expanded := self.aliases.get(cmd_name):
+            args_extended = list(expanded) + args[1:]
             return self.resolve_command(ctx, args_extended)
 
         # command name does not match any implemented wrapper, pass args to docker
@@ -54,8 +55,15 @@ class BollardGroup(click.Group):
         """Add unwrapped targets as a fake command in this group. For displaying
         commands and its description in help text."""
         for cmd, desc in targets:
-            if cmd not in self.commands:
-                self.create_phony_command(cmd, desc)
+            if cmd in self.commands:
+                continue
+            if cmd in self.aliases:
+                continue
+            self.create_phony_command(cmd, desc)
+
+    def add_alias(self, alias: str, cmd: Sequence[str]):
+        assert isinstance(cmd, (list, tuple))
+        self.aliases[alias] = tuple(cmd)
 
 
 def create_phony_command(name: str | None = None, help: str | None = None) -> "Command":

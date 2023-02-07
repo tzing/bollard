@@ -73,3 +73,8 @@ _SUBCOMMANDS = [
 ]
 
 main.add_unwrapped_targets(_SUBCOMMANDS)
+
+# aliases
+main.add_alias("containers", ["container", "ls"])
+main.add_alias("networks", ["network", "ls"])
+main.add_alias("volumes", ["volume", "ls"])
