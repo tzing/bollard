@@ -23,7 +23,9 @@ PATTERN_DOCKER_CLIENT = r"""Client:
 """
 
 
-@pytest.mark.skipif(os.getenv("CI"), reason="Gh action runs sh, which is not supported")
+@pytest.mark.skipif(
+    os.getenv("CI") is not None, reason="Gh action runs sh, which is not supported"
+)
 def test_completion(runner):
     rv = runner.invoke(t.completion)
     assert rv.exit_code == 0
