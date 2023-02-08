@@ -40,7 +40,7 @@ class TestIsDockerReady:
 @pytest.mark.usefixtures("_with_click_context")
 def test_check_docker_output():
     assert re.match(
-        rb"Docker version \d+\.\d+\.\d+,", t.check_docker_output(["--version"])
+        rb"Docker version \d+\.\d+\.\d+", t.check_docker_output(["--version"])
     )
 
 
