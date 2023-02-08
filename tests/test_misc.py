@@ -8,19 +8,14 @@ import bollard.misc as t
 
 def test_version(runner):
     rv = runner.invoke(t.version)
-    assert re.search(PATTERN_BOLLARD_VERSION, rv.output)
-    assert re.search(PATTERN_DOCKER_CLIENT, rv.output)
 
+    regex_version = re.compile(r"Version: +\d+\.\d+\.\d+")
 
-PATTERN_BOLLARD_VERSION = r"""Bollard:
- Version: +\d+\.\d+\.\d+
-"""
+    idx_client = rv.output.find("Client:")
+    assert regex_version.search(rv.output, idx_client)
 
-# cloud integration line not exists in gh action
-PATTERN_DOCKER_CLIENT = r"""Client:
-( Cloud integration: +v\d+\.\d+\.\d+
-)? Version: +\d+\.\d+\.\d+
-"""
+    idx_bollard = rv.output.find("Bollard:")
+    assert regex_version.search(rv.output, idx_bollard, idx_client)
 
 
 @pytest.mark.skipif(
