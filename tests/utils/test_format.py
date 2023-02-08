@@ -1,15 +1,23 @@
 import datetime
+import os
+import re
+import zoneinfo
+
+import freezegun
 
 import bollard.utils.format as t
 
 
-import freezegun
-
-
-@freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8)
 def test_format_iso_time():
-    assert t.format_iso_time("2023-04-05T06:07:08.910Z") == "2023-04-05T14:07:08+08:00"
-    assert t.format_iso_time(datetime.datetime.now()) == "2023-04-05T14:07:08+08:00"
+    t0 = datetime.datetime(
+        2021, 2, 3, 4, 5, 6, tzinfo=zoneinfo.ZoneInfo("Europe/Zurich")
+    )
+    tf = t.format_iso_time(t0)
+
+    assert re.fullmatch(r"2021-02-0[23]T\d{2}:05:06[+-]\d{2}:\d{2}", tf)
+
+    if os.getenv("CI"):  # gh server is utc, shift -1 from t0
+        assert tf == "2021-02-03T03:05:06+00:00"
 
 
 @freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8)

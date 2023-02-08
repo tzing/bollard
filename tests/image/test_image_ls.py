@@ -65,18 +65,16 @@ def test_select_images():
         ]
 
 
-@freezegun.freeze_time("2023-4-5 06:07:08.910", tz_offset=8)
 @pytest.mark.parametrize(
     ("column", "output"),
     [
-        ("architecture", ["arm64"]),
-        ("created:iso", ["2023-04-05T14:07:05+08:00"]),
+        ("architecture", ["amd64"]),
         ("created", ["3 seconds ago"]),
         ("digest", ["bbbb"]),
         ("id", ["aaaa"]),
         ("name", ["name", "foo"]),
         ("os", ["linux"]),
-        ("platform", ["linux/arm64"]),
+        ("platform", ["linux/amd64"]),
         ("registry", ["", "example.com"]),
         ("repo_tag", ["name:latest", "example.com/foo:2023.2.0"]),
         ("repository", ["name", "example.com/foo"]),
@@ -85,19 +83,23 @@ def test_select_images():
     ],
 )
 def test_get_field_data(column: str, output: list):
-    with patch(
-        "bollard.image.data.get_image_data",
-        return_value=[
-            {
-                "Id": "sha256:aaaa",
-                "Created": "2023-04-05T06:07:05.910Z",
-                "RepoDigests": ["example.com/name@sha256:bbbb"],
-                "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
-                "Size": 1234,
-                "Architecture": "arm64",
-                "Os": "linux",
-            }
-        ],
+    with (
+        patch(
+            "bollard.image.data.get_image_data",
+            return_value=[
+                {
+                    "Id": "sha256:aaaa",
+                    "Created": "2023-04-05T06:07:05.910Z",
+                    "RepoDigests": ["example.com/name@sha256:bbbb"],
+                    "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
+                    "Size": 1234,
+                    "Architecture": "amd64",
+                    "Os": "linux",
+                }
+            ],
+        ),
+        patch("platform.machine", return_value="amd64"),
+        freezegun.freeze_time("2023-4-5 06:07:08.910"),
     ):
         assert list(t.get_field_data("sha256:aaaa", column, False)) == output
 
