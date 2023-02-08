@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bollard"
-version = "0.1.1"
+version = "0.1.2"
 description = "Wrapper for docker command that provide handful options and alias"
 authors = ["Tzu-Ting <tzingshih@gmail.com>"]
 license = "Apache-2.0"
@@ -21,6 +21,11 @@ freezegun = "^1.2.2"
 
 [tool.poetry.scripts]
 bollard = "bollard:main"
+
+[[tool.poetry_bumpversion.replacements]]
+files = ["bollard/constants.py"]
+search = 'pkg_version = "{current_version}"'
+replace = 'pkg_version = "{new_version}"'
 
 [build-system]
 requires = ["poetry-core"]
