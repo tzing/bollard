@@ -58,7 +58,7 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
 
 
 def collect_fields(
-    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any]
+    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any] = {}
 ) -> list[dict[str, str]]:
     """Collect image data into dicts."""
     # query once for caching the data in memory
@@ -120,7 +120,7 @@ def get_field_data(
     (data,) = inspect_image([image_id])
     match column:
         case "architecture":
-            yield format_architecture(data["Architecture"], formats)
+            yield get_architecture(data, formats)
         case "created:iso":
             yield format_iso_time(data["Created"])
         case "created":
@@ -168,13 +168,19 @@ def get_field_data(
             logger.critical("Internal error - Unmapped column %s", column)
 
 
-def format_architecture(arch: str, formats: dict[str, Any]) -> str:
+def get_architecture(data: dict[str, str], formats: dict[str, Any]) -> str:
     import platform
+    from gettext import gettext as t
 
-    do = formats.get("highlight_architecture", True)
-    if not do or platform.machine().upper() == arch.upper():
-        return arch
-    return click.style(arch, fg="yellow", bold=True)
+    out = arch = data.get("Architecture", t("unknown"))
+    if variant := data.get("Variant"):
+        out = f"{arch}/{variant}"
+
+    fmt_highlight = formats.get("highlight_architecture", True)
+    if fmt_highlight and platform.machine().upper() != arch.upper():
+        out = click.style(out, fg="yellow", bold=True)
+
+    return out
 
 
 def format_digest(digest: str, formats: dict[str, Any]) -> str:

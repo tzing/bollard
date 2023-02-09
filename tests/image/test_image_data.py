@@ -164,11 +164,17 @@ def test_get_field_data(column: str, output: list):
     assert list(t.get_field_data("sha256:aaaa", column, {})) == output
 
 
-def test_format_architecture(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("platform.machine", lambda: "amd64")
+def test_get_architecture():
+    # match
+    with patch("platform.machine", return_value="amd64"):
+        assert t.get_architecture({"Architecture": "amd64"}, {}) == "amd64"
+    with patch("platform.machine", return_value="arm64"):
+        assert (
+            t.get_architecture({"Architecture": "arm64", "Variant": "v8"}, {})
+            == "arm64/v8"
+        )
 
-    assert t.format_architecture("amd64", {}) == "amd64"
-    assert t.format_architecture("test", {"highlight_architecture": False}) == "test"
-
+    # not match
     colored = click.style("test", fg="yellow", bold=True)
-    assert t.format_architecture("test", {}) == colored
+    with patch("platform.machine", return_value="foo"):
+        assert t.get_architecture({"Architecture": "test"}, {}) == colored
