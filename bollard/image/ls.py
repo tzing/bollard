@@ -118,7 +118,8 @@ def list_images(
        created:iso
           Image created time in ISO format (e.g. `2023-01-02T03:04:05+06:00`)
        created
-          Relative time of image creation. Similar to docker's default (e.g. `3 days ago`)
+          Relative time of image creation. Similar to docker's default
+          (e.g. `3 days ago`)
        digest
           Image digest(s)
        id
@@ -187,7 +188,8 @@ def list_images(
             data = order_dict(data, key, desc)
         else:
             logger.warning(
-                "`--order-by` field (%s) not in selected columns (%s). Discard this setting.",
+                "`--order-by` field (%s) not in selected columns (%s). "
+                "Discard this setting.",
                 key,
                 ", ".join(columns),
             )

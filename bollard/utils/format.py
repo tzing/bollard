@@ -12,8 +12,9 @@ def format_iso_time(s: typing.Union[str, "datetime.datetime"]) -> str:
 
 
 def format_relative_time(s: typing.Union[str, "datetime.datetime"]) -> str:
-    import humanize
     import datetime
+
+    import humanize
 
     t = _to_time_object(s)
     now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
