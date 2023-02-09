@@ -48,7 +48,7 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
 
     # review
     request_ids = set(image_ids)
-    output_ids = set(d["Id"] for d in output)
+    output_ids = {d["Id"] for d in output}
     if request_ids != output_ids:
         missing_ids = request_ids - output_ids
         for id_ in missing_ids:
@@ -61,8 +61,6 @@ def collect_fields(
     image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any]
 ) -> list[dict[str, str]]:
     """Collect image data into dicts."""
-    import itertools
-
     # query once for caching the data in memory
     inspect_image(image_ids)
 
@@ -77,28 +75,36 @@ def collect_fields(
     # explode nested list into multiple rows
     output = []
     for data in collected:
-        # categorize
-        col_unique = {}
-        col_zipped = {}
-        for c, v in data.items():
-            if not v:
-                col_unique[c] = None
-            elif len(v) == 1:
-                (col_unique[c],) = v
-            else:
-                col_zipped[c] = v
-
-        # explode
-        if col_zipped:
-            for fv in itertools.zip_longest(*col_zipped.values()):
-                d = col_unique.copy()
-                for c, v in zip(col_zipped, fv):
-                    d[c] = v
-                output.append(d)
-        else:
-            output.append(col_unique)
-
+        output.extend(explode_rows(data))
     return output
+
+
+def explode_rows(source: dict[str, list[Any]]) -> list[dict]:
+    """Explodes single object into rows if there are multiple values inside"""
+    import itertools
+
+    # categorize
+    col_unique = {}
+    col_zipped = {}
+    for c, v in source.items():
+        if not v:
+            col_unique[c] = None
+        elif len(v) == 1:
+            (col_unique[c],) = v
+        else:
+            col_zipped[c] = v
+
+    # early return
+    if not col_zipped:
+        yield col_unique
+        return
+
+    # explode
+    for fv in itertools.zip_longest(*col_zipped.values()):
+        row = col_unique.copy()
+        for c, v in zip(col_zipped, fv):
+            row[c] = v
+        yield row
 
 
 def get_field_data(
