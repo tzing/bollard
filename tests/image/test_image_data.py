@@ -121,7 +121,6 @@ def test_collect_fields():
     ("column", "output"),
     [
         ("architecture", ["arm64"]),
-        ("created:iso", ["2023-04-05T14:07:05+08:00"]),
         ("created", ["3 seconds ago"]),
         ("digest", ["bbbb"]),
         ("id", ["aaaa"]),

@@ -15,20 +15,9 @@ logger = logging.getLogger(__name__)
 @functools.cache
 def get_command_path(name: str) -> str | None:
     """Get path to the command. Returns None when not installed."""
-    import subprocess
+    import shutil
 
-    # query
-    # https://pubs.opengroup.org/onlinepubs/9699919799/utilities/command.html
-    rv = subprocess.run(
-        ["command", "-v", name], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
-    )
-    if rv.returncode != 0:
-        # fail
-        return None
-
-    # success
-    path = rv.stdout.rstrip().decode()
-    return path
+    return shutil.which(name)
 
 
 @functools.cache
@@ -74,12 +63,14 @@ def is_docker_daemon_running() -> bool:
 
 @functools.cache
 def is_docker_ready() -> bool:
+    from gettext import gettext as t
+
     if not get_command_path("docker"):
-        logger.warning("Command not found: %s", "docker")
+        logger.warning(t("Command '%s' not found"), "docker")
         return False
 
     if not is_docker_daemon_running():
-        logger.warning("Docker daemon is not running")
+        logger.warning(t("Docker daemon is not running"))
         return False
 
     return True
@@ -95,9 +86,10 @@ def run_docker(
     """A :func:`subprocess.run` to run docker commands, with some functional
     check before the command runs."""
     import subprocess
+    from gettext import gettext as t
 
     if not is_docker_ready():
-        return None
+        raise click.Abort
 
     cmd = [get_command_path("docker")]
 
@@ -107,7 +99,7 @@ def run_docker(
 
     cmd += list(args)
 
-    logger.debug("Invoke docker command: %s", cmd)
+    logger.debug(t("Invoke docker command: %s"), cmd)
     return subprocess.run(cmd, stdout=stdout, stderr=stderr)
 
 

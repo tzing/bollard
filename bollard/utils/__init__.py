@@ -6,4 +6,4 @@ from bollard.utils.format import (
 )
 from bollard.utils.name import split_repo_tag
 from bollard.utils.params import append_parameters, rebuild_args
-from bollard.utils.subprocess import check_docker_output, is_docker_ready, run_docker
+from bollard.utils.process import check_docker_output, is_docker_ready, run_docker

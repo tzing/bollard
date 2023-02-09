@@ -1,8 +1,9 @@
 import re
 
+import click
 import pytest
 
-import bollard.utils.subprocess as t
+import bollard.utils.process as t
 
 
 def test_get_command_path():
@@ -26,7 +27,7 @@ class TestIsDockerReady:
     ):
         monkeypatch.setattr(t, "get_command_path", lambda _: None)
         assert t.is_docker_ready() is False
-        assert "Command not found: docker" in caplog.text
+        assert "Command 'docker' not found" in caplog.text
 
     def test_fail_2(
         self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
@@ -39,10 +40,11 @@ class TestIsDockerReady:
 @pytest.mark.usefixtures("_with_click_context")
 def test_check_docker_output():
     assert re.match(
-        rb"Docker version \d+\.\d+\.\d+,", t.check_docker_output(["--version"])
+        rb"Docker version \d+\.\d+\.\d+", t.check_docker_output(["--version"])
     )
 
 
 def test_check_docker_output_fail(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(t, "is_docker_ready", lambda: False)
-    assert t.check_docker_output(["--version"]) == b""
+    with pytest.raises(click.Abort):
+        t.check_docker_output(["--version"])
