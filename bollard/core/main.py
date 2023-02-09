@@ -16,7 +16,7 @@ DOCKER_OPTIONS = [
     click.Option(
         ["-c", "--context"],
         help="Name of the context to use to connect to the daemon "
-        '(overrides DOCKER_HOST env var and default context set with "docker context use").',
+        '(overrides DOCKER_HOST env var and default context set with "docker context use").',  # noqa: E501
     ),
     click.Option(
         ["-D", "--debug"],
