@@ -1,6 +1,6 @@
-import bollard.utils.params as t
-
 import click
+
+import bollard.utils.params as t
 
 
 def test_rebuild_args():
