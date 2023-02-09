@@ -1,0 +1,21 @@
+[flake8]
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    docs,
+
+extend-ignore = E203, W503
+
+max-cognitive-complexity = 12
+
+max-line-length = 88
+
+per-file-ignores =
+    */__init__.py: E501, F401
+    tests/*: E501
+
+    # temp
+    bollard/image/data.py: C401
+    bollard/image/ls.py: CCR001
+    bollard/image/selector.py: CCR001
