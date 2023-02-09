@@ -1,7 +1,7 @@
 import itertools
 import logging
 import sys
-from typing import Any, Iterator, NoReturn, Sequence
+from typing import Any, NoReturn, Sequence
 
 import click
 
@@ -278,10 +278,7 @@ def select_images(
     from bollard.image.selector import is_image_match_selector
 
     # get all image list
-    if filters:
-        image_ids = list_image_ids(incl_interm_img=incl_interm_img, filters=filters)
-    else:
-        image_ids = list_image_ids(incl_interm_img=incl_interm_img)
+    image_ids = list_image_ids(incl_interm_img=incl_interm_img, filters=filters)
 
     # apply selectors
     if selectors:
