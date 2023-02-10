@@ -18,7 +18,10 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     image id or digests. When multiple selectors are given, it selects the
     result of the union ('OR' operation).
     """
+    from gettext import gettext as t
     from gettext import ngettext
+
+    from bollard.image.data import tabulate_image_data
 
     # get images
     if selector:
@@ -27,7 +30,7 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
         raise NotImplementedError
 
     if not images:
-        click.echo("No image to be removed")
+        click.echo(t("No image to be removed"))
         sys.exit(0)
 
     # show image
@@ -36,13 +39,24 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
         fg="red",
         bold=True,
     )
+    click.echo()
 
-    print(images)  # TODO
+    table = tabulate_image_data(
+        {
+            "id": {"title": "ID"},
+            "repository": {"title": "REPO"},
+            "tag": {"title": "TAG"},
+        },
+        images,
+    )
+    click.echo(table)
+    click.echo()
 
-    if not yes:
-        click.confirm("Proceed", prompt_suffix="? ", abort=True)
-
-    click.echo("Removing...")
+    # confirm
+    if yes:
+        click.echo(t("Removing..."))
+    else:
+        click.confirm(t("Proceed"), abort=True)
 
     raise NotImplementedError
 
