@@ -1,4 +1,4 @@
-def build_table(columns: list | dict[str, dict], data: list[dict]):
+def tabulate(columns: list | dict[str, dict], data: list[dict]):
     from gettext import gettext as t
 
     import click
