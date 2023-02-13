@@ -57,22 +57,8 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
     return output
 
 
-def tabulate_image_data(
-    table_spec: dict[str, dict],
-    image_ids: Sequence[str],
-    col_format: dict[str, Any] = {},
-) -> str:
-    """Shortcut for collect_fields + tabulate"""
-    from bollard.utils import tabulate
-
-    data = collect_fields(image_ids, table_spec, col_format)
-    table = tabulate(table_spec, data)
-
-    return table
-
-
 def collect_fields(
-    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any]
+    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any] = {}
 ) -> list[dict[str, str]]:
     """Collect image data into dicts."""
     # query once for caching the data in memory

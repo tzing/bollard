@@ -48,20 +48,6 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
     assert "No such image: sha256:dddddddd" in caplog.text
 
 
-def test_tabulate_image_data(monkeypatch: pytest.MonkeyPatch):
-    def mock_collect_fields(ids, columns, formats):
-        assert list(ids) == ["sha256:aaaa"]
-        assert list(columns) == ["id", "repo_tag", "digest"]
-        assert formats == {}
-        return [{"id": "aaaa", "repo_tag": "name:latest", "digest": "bbbb"}]
-
-    monkeypatch.setattr(t, "collect_fields", mock_collect_fields)
-
-    assert isinstance(
-        t.tabulate_image_data(["id", "repo_tag", "digest"], ["sha256:aaaa"]), str
-    )
-
-
 @pytest.fixture()
 def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
     def mock_inspect(ids: list[str]):
@@ -94,7 +80,7 @@ def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
 @pytest.mark.usefixtures("_patch_inspect")
 def test_collect_fields():
     assert t.collect_fields(
-        ["sha256:aaaa", "sha256:bbbb"], ["id", "repo_tag", "digest"], {}
+        ["sha256:aaaa", "sha256:bbbb"], ["id", "repo_tag", "digest"]
     ) == [
         {
             "id": "aaaa",

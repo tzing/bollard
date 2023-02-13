@@ -151,6 +151,7 @@ def list_images(
           Converts to id and repo_tag
     """
     from bollard.image.data import collect_fields
+    from bollard.image.display import print_table
 
     # check input & env
     if selector and extra.get("format"):
@@ -326,35 +327,3 @@ def order_dict(data: list[dict], column: str, desc: bool) -> list[str]:
             return (not desc, v)
 
     return sorted(data, key=_get_key, reverse=desc)
-
-
-def print_table(column: Sequence[str], data: list[dict]):
-    import tabulate
-
-    # build header
-    headers = []
-    colalign = []
-    for c in column:
-        text, align = _COLUMNS[c]
-        headers.append(click.style(text, bold=True))
-        colalign.append(align)
-
-    # build rows
-    empty_marker = click.style("-", fg="white", dim=True)
-    rows = []
-    for d in data:
-        rows.append([(d[c] or empty_marker) for c in column])
-
-    if not rows:
-        row_empty = [None] * len(column)
-        row_empty[0] = click.style("no data", fg="yellow", dim=True)
-        rows = [row_empty]
-
-    # print
-    table = tabulate.tabulate(
-        tablefmt="plain",
-        headers=headers,
-        colalign=colalign,
-        tabular_data=rows,
-    )
-    click.echo(table)

@@ -21,7 +21,8 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     from gettext import gettext as t
     from gettext import ngettext
 
-    from bollard.image.data import tabulate_image_data
+    from bollard.image.data import collect_fields
+    from bollard.image.display import print_table
 
     # get images
     if selector:
@@ -41,15 +42,9 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     )
     click.echo()
 
-    table = tabulate_image_data(
-        {
-            "id": {"title": "ID"},
-            "repository": {"title": "REPO"},
-            "tag": {"title": "TAG"},
-        },
-        images,
-    )
-    click.echo(table)
+    cols = ["id", "repository", "tag"]
+    data = collect_fields(images, cols)
+    print_table(cols, data)
     click.echo()
 
     # confirm
