@@ -1,5 +1,3 @@
-import io
-
 import pytest
 
 import bollard.image.display as t

@@ -1,7 +1,5 @@
 from unittest.mock import patch
 
-import pytest
-
 import bollard.image.rm as t
 
 

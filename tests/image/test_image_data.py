@@ -161,7 +161,7 @@ def test_explode_rows(source: dict, expect: list):
 )
 @pytest.mark.usefixtures("_patch_inspect")
 def test_get_field_data(column: str, output: list):
-    assert list(t.get_field_data("sha256:aaaa", column, {})) == output
+    assert list(t.get_field_data("sha256:aaaa", column)) == output
 
 
 def test_get_architecture():

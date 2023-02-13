@@ -58,7 +58,7 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
 
 
 def collect_fields(
-    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any] = {}
+    image_ids: Sequence[str], columns: Sequence[str], formats: dict[str, Any] = None
 ) -> list[dict[str, str]]:
     """Collect image data into dicts."""
     # query once for caching the data in memory
@@ -108,7 +108,7 @@ def explode_rows(source: dict[str, list[Any]]) -> list[dict]:
 
 
 def get_field_data(
-    image_id: str, column: str, formats: dict[str, Any]
+    image_id: str, column: str, formats: dict[str, Any] | None = None
 ) -> Iterator[str]:
     from bollard.utils import (
         format_iso_time,
@@ -118,6 +118,7 @@ def get_field_data(
     )
 
     (data,) = inspect_image([image_id])
+    formats = formats or {}  # formats could be `None`
     match column:
         case "architecture":
             yield get_architecture(data, formats)
