@@ -150,6 +150,8 @@ def list_images(
        compact
           Converts to id and repo_tag
     """
+    from bollard.image.data import collect_fields
+
     # check input & env
     if selector and extra.get("format"):
         logger.error("Selector are not supported to use with format")
@@ -179,8 +181,9 @@ def list_images(
         flag_quiet=extra.get("quiet"),
     )
 
-    data = collect_fields(image_ids, columns, use_full_digest=extra.get("no_trunc"))
-    data = explode_dict(data)
+    data = collect_fields(
+        image_ids, columns, {"short_digest": not extra.get("no_trunc")}
+    )
 
     if order_by:
         desc, key = order_by
