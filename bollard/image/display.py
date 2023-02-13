@@ -17,9 +17,7 @@ COLUMN_DISPLAY_FORMAT = {
 }
 
 
-def print_table(columns: Sequence[str], data: list[dict]) -> None:
-    import click
-
+def build_table(columns: Sequence[str], data: list[dict]) -> str:
     from bollard.utils import tabulate
 
     # build table spec
@@ -29,4 +27,11 @@ def print_table(columns: Sequence[str], data: list[dict]) -> None:
 
     # build table and print
     table = tabulate(table_spec, data)
+    return table
+
+
+def print_table(columns: Sequence[str], data: list[dict]) -> None:
+    import click
+
+    table = build_table(columns, data)
     click.echo(table)
