@@ -3,7 +3,7 @@ import re
 import click
 import pytest
 
-import bollard.utils.process as t
+import bollard.utils.docker as t
 
 
 def test_get_command_path():
