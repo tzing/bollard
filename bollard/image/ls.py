@@ -8,22 +8,21 @@ import click
 from bollard.image.base import group
 from bollard.utils import append_parameters, is_docker_ready, rebuild_args, run_docker
 
-_COLUMNS = {
-    # choice: output header, output align
-    "architecture": ("ARCH", "left"),
-    "created:iso": ("CREATED TIME", "right"),
-    "created": ("CREATED", "right"),
-    "digest": ("DIGEST", "left"),
-    "id": ("ID", "left"),
-    "name": ("NAME", "left"),
-    "os": ("OS", "left"),
-    "platform": ("PLATFORM", "left"),
-    "registry": ("REGISTRY", "left"),
-    "repo_tag": ("REPO TAG", "left"),
-    "repository": ("REPOSITORY", "left"),
-    "size": ("SIZE", "right"),
-    "tag": ("TAG", "left"),
-}
+_COLUMNS = [
+    "architecture",
+    "created:iso",
+    "created",
+    "digest",
+    "id",
+    "name",
+    "os",
+    "platform",
+    "registry",
+    "repo_tag",
+    "repository",
+    "size",
+    "tag",
+]
 
 _COLUMN_ALIAS = {
     "arch": "architecture",
@@ -34,8 +33,6 @@ _COLUMN_SET = {
     "default": ("id", "repository", "tag", "created", "size"),
     "compact": ("id", "repo_tag"),
 }
-
-_COLUMN_CHOICES = sorted(list(_COLUMNS) + list(_COLUMN_ALIAS) + list(_COLUMN_SET))
 
 logger = logging.getLogger(__name__)
 
@@ -62,14 +59,14 @@ class OrderByField(click.Choice):
 @click.option(
     "-C",
     "--column",
-    type=click.Choice(_COLUMN_CHOICES, False),
+    type=click.Choice(list(_COLUMNS) + list(_COLUMN_ALIAS) + list(_COLUMN_SET), False),
     metavar="COLUMN",
     multiple=True,
     help="Show column (multiple)",
 )
 @click.option(
     "--order-by",
-    type=OrderByField(_COLUMN_CHOICES, False),
+    type=OrderByField(list(_COLUMNS) + list(_COLUMN_ALIAS), False),
     metavar="COLUMN",
     help="Order the output by the column. "
     "Default in ascending, add minus as prefix for decending order",

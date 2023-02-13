@@ -1,8 +1,14 @@
 from unittest.mock import patch
 
+import click.testing
 import pytest
 
 import bollard.image.ls as t
+
+
+def test_cli(runner):
+    rv: click.testing.Result = runner.invoke(t.list_images)
+    assert rv.exit_code == 0
 
 
 def test_get_columns():
