@@ -1,4 +1,6 @@
 import re
+import subprocess
+from unittest.mock import Mock
 
 import click
 import pytest
@@ -48,3 +50,31 @@ def test_check_docker_output_fail(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(t, "is_docker_ready", lambda: False)
     with pytest.raises(click.Abort):
         t.check_docker_output(["--version"])
+
+
+def test_interactive_select(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(t, "get_command_path", lambda _: "/test/fzf")
+
+    def mock_run(args, **kwargs):
+        assert kwargs["input"] == b"aaa\nbbb\nccc"
+
+        rv = Mock(spec=subprocess.CompletedProcess)
+        rv.stdout = b"aaa\nbbb"
+        return rv
+
+    monkeypatch.setattr("subprocess.run", mock_run)
+
+    assert t.interactive_select(
+        ["aaa", "bbb", "ccc"],
+        header="test header",
+        prompt="test prompt",
+    ) == ["aaa", "bbb"]
+
+    assert t.interactive_select([]) == []
+
+
+def test_interactive_select_fail(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(t, "get_command_path", lambda _: None)
+
+    with pytest.raises(click.Abort):
+        t.interactive_select(["aaa"])
