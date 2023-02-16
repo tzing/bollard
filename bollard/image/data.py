@@ -1,13 +1,18 @@
+import collections.abc
 import logging
+import re
 from typing import Any, Iterator, Sequence
 
 import click
 
 from bollard.utils import check_docker_output
 
-logger = logging.getLogger(__name__)
+FULL_LENGTH = 64
 
-__cache_image_data = {}
+logger = logging.getLogger(__name__)
+regex_sha = re.compile(r"(?:sha256:)?([0-9a-f]{2,64})", re.RegexFlag.IGNORECASE)
+
+__cache_image_data = None
 
 
 def list_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> list[str]:
@@ -31,6 +36,9 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
     """Wrap `docker inspect` command and cache the result."""
     global __cache_image_data
     import json
+
+    if __cache_image_data is None:
+        __cache_image_data = PrefixDict()
 
     output = []
 
@@ -62,6 +70,55 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
             logger.warning("No such image: %s", id_)
 
     return output
+
+
+class PrefixDict(collections.abc.MutableMapping[str, Any]):
+    """A dict object that matches the prefix on key."""
+
+    def __init__(self):
+        self._data: dict[str, Any] = {}
+        self._alias: dict[str, str] = {}
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __getitem__(self, __key: str) -> Any:
+        m = regex_sha.fullmatch(__key)
+        if not m:
+            raise KeyError(__key)
+
+        # direct query
+        sha = m.group(1).lower()
+        if len(sha) == FULL_LENGTH:
+            return self._data[sha]
+
+        if orig_key := self._alias.get(sha):
+            return self._data[orig_key]
+
+        # match
+        for full_sha, data in self._data.items():
+            if full_sha.startswith(sha):
+                self._alias[sha] = full_sha
+                return data
+
+        raise KeyError(__key)
+
+    def __setitem__(self, __key: str, __value: Any) -> None:
+        m = regex_sha.fullmatch(__key)
+        if not m:
+            raise KeyError(__key)
+
+        sha = m.group(1).lower()
+        if len(sha) != FULL_LENGTH:
+            raise NotImplementedError
+
+        self._data[sha] = __value
+
+    def __delitem__(self, __key: str) -> None:
+        raise NotImplementedError
 
 
 def collect_fields(

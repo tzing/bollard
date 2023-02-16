@@ -48,6 +48,18 @@ def test_inspect_image(caplog: pytest.LogCaptureFixture):
     assert "No such image: sha256:dddddddd" in caplog.text
 
 
+def test_prefix_dict():
+    d = t.PrefixDict()
+    d["a" * 64] = 1
+    d["b" * 64] = 2
+    d["sha256:" + "a" * 64] = 3
+
+    assert d["sha256:aaaa"] == 3
+    assert d["aaaa"] == 3
+    assert d["bbbb"] == 2
+    assert d.get("cccc") is None
+
+
 @pytest.fixture()
 def _patch_inspect(monkeypatch: pytest.MonkeyPatch):
     def mock_inspect(ids: list[str]):
