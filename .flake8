@@ -16,6 +16,5 @@ per-file-ignores =
     tests/*: E501
 
     # temp
-    bollard/image/data.py: C401
     bollard/image/ls.py: CCR001
     bollard/image/selector.py: CCR001
