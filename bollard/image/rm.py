@@ -4,6 +4,7 @@ from typing import Sequence
 import click
 
 from bollard.image.base import group
+from bollard.utils import append_parameters, rebuild_args, run_docker
 
 
 @group.command(name="rm")
@@ -33,7 +34,7 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     if not images:
         msg = click.style(t("No image to be removed"), fg="yellow", bold=True)
         click.echo(msg, err=True)
-        sys.exit(0)
+        sys.exit(1)
 
     # show image
     click.secho(
@@ -54,11 +55,20 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     else:
         click.confirm(t("Proceed"), abort=True)
 
-    raise NotImplementedError
+    # proceed
+    args = ["image", "rm"] + rebuild_args(extra, _DOCKER_OPTIONS)
+    for id_ in images:
+        run_docker(args + [id_])
 
 
 group.add_alias("remove", ["rm"])
 group.add_alias("rmi", ["rm"])
+
+_DOCKER_OPTIONS = [
+    click.Option(["-f", "--force"], is_flag=True, help="Force removal of the image"),
+    click.Option(["--no-prune"], is_flag=True, help="Do not delete untagged parents"),
+]
+append_parameters(remove_images, _DOCKER_OPTIONS)
 
 
 def select_images(selectors: Sequence[str]) -> list[str]:

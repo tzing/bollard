@@ -1,6 +1,26 @@
 from unittest.mock import patch
 
+import click.testing
+
 import bollard.image.rm as t
+
+
+def test_cli(runner: click.testing.CliRunner):
+    # empty
+    rv = runner.invoke(t.remove_images, ["no-this-image"])
+    assert "No image to be removed" in rv.output
+    assert rv.exit_code == 1
+
+    # removed
+    with (
+        patch.object(t, "select_images", return_value=["aaaa"]),
+        patch.object(t, "run_docker") as dkr,
+        patch("bollard.image.data.collect_fields"),
+        patch("bollard.image.display.print_table"),
+    ):
+        rv = runner.invoke(t.remove_images, ["-fy", "test"])
+    assert rv.exit_code == 0
+    dkr.assert_any_call(["image", "rm", "-f", "aaaa"])
 
 
 def test_select_images():
