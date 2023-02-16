@@ -46,10 +46,11 @@ def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
             __cache_image_data[id_] = data
             output.append(data)
 
-    # review
+    # check all requested data are fetched
+    # the request id could be prefix only so we should comparing through the count
     request_ids = set(image_ids)
     output_ids = {d["Id"] for d in output}
-    if request_ids != output_ids:
+    if len(request_ids) != len(output_ids):
         missing_ids = request_ids - output_ids
         for id_ in missing_ids:
             logger.warning("No such image: %s", id_)
