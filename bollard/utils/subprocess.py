@@ -1,7 +1,7 @@
 import functools
 import logging
 import typing
-from typing import Optional, Sequence
+from typing import Optional, Sequence, cast
 
 import click
 
@@ -114,3 +114,58 @@ def check_docker_output(args: Sequence[str], *, use_context: bool = True) -> byt
         return rv.stdout
 
     return b""
+
+
+def interactive_select(
+    items: Sequence[str],
+    multi: bool = True,
+    header: str | None = None,
+    prompt: str | None = None,
+) -> list[str]:
+    """Run fzf as an interactive interface to select the item(s)."""
+    import os
+    import subprocess
+    from gettext import gettext as t
+
+    import click
+
+    if not items:
+        return []
+
+    # check installed
+    if not (path := get_command_path("fzf")):
+        click.secho(
+            t("Command-line tool `fzf` is required for interactive selection feature."),
+            fg="red",
+            bold=True,
+            err=True,
+        )
+        raise click.Abort
+
+    # build args
+    args = [
+        path,
+        "--cycle",
+        "--layout=reverse",
+        "--height=~40%",
+        "--border",
+        "--margin=1",
+        "--ansi",
+    ]
+    if multi:
+        args += ["--multi"]
+    if header:
+        args += ["--header", header]
+    if prompt:
+        args += ["--prompt", prompt]
+
+    # run
+    data = os.linesep.join(items).encode()
+    rv = subprocess.run(
+        args,
+        input=data,
+        stdout=subprocess.PIPE,
+    )
+
+    resp = cast(bytes, rv.stdout)
+    return resp.decode().splitlines()

@@ -1,9 +1,14 @@
 from unittest.mock import patch
 
-import freezegun
+import click.testing
 import pytest
 
 import bollard.image.ls as t
+
+
+def test_cli(runner):
+    rv: click.testing.Result = runner.invoke(t.list_images)
+    assert rv.exit_code == 0
 
 
 def test_get_columns():
@@ -42,11 +47,11 @@ def test_list_images_fallback():
 def test_select_images():
     with (
         patch(
-            "bollard.image.data.get_image_ids",
+            "bollard.image.data.list_image_ids",
             return_value=["sha256:aaaa", "sha256:bbbb", "sha256:cccc"],
         ),
         patch(
-            "bollard.image.data.get_image_data",
+            "bollard.image.data.inspect_image",
             return_value=[
                 {"Id": "sha256:aaaa", "RepoTags": ["test:latest"]},
                 {"Id": "sha256:bbbb", "RepoTags": ["foo:latest"]},
@@ -63,59 +68,6 @@ def test_select_images():
             "sha256:aaaa",
             "sha256:bbbb",
         ]
-
-
-@pytest.mark.parametrize(
-    ("column", "output"),
-    [
-        ("architecture", ["amd64"]),
-        ("created", ["3 seconds ago"]),
-        ("digest", ["bbbb"]),
-        ("id", ["aaaa"]),
-        ("name", ["name", "foo"]),
-        ("os", ["linux"]),
-        ("platform", ["linux/amd64"]),
-        ("registry", ["", "example.com"]),
-        ("repo_tag", ["name:latest", "example.com/foo:2023.2.0"]),
-        ("repository", ["name", "example.com/foo"]),
-        ("size", ["1.2 kB"]),
-        ("tag", ["latest", "2023.2.0"]),
-    ],
-)
-def test_get_field_data(column: str, output: list):
-    with (
-        patch(
-            "bollard.image.data.get_image_data",
-            return_value=[
-                {
-                    "Id": "sha256:aaaa",
-                    "Created": "2023-04-05T06:07:05.910Z",
-                    "RepoDigests": ["example.com/name@sha256:bbbb"],
-                    "RepoTags": ["name:latest", "example.com/foo:2023.2.0"],
-                    "Size": 1234,
-                    "Architecture": "amd64",
-                    "Os": "linux",
-                }
-            ],
-        ),
-        patch("platform.machine", return_value="amd64"),
-        freezegun.freeze_time("2023-4-5 06:07:08.910"),
-    ):
-        assert list(t.get_field_data("sha256:aaaa", column, False)) == output
-
-
-def test_explode_dict():
-    rv = t.explode_dict(
-        [
-            {"foo": [], "bar": ["baz"]},
-            {"foo": ["test"], "bar": ["baz", "qax"]},
-        ]
-    )
-    assert rv == [
-        {"foo": None, "bar": "baz"},
-        {"foo": "test", "bar": "baz"},
-        {"foo": "test", "bar": "qax"},
-    ]
 
 
 def test_parse_top_n_arg():

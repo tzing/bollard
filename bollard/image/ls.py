@@ -1,29 +1,28 @@
 import itertools
 import logging
 import sys
-from typing import Any, Iterator, NoReturn, Sequence
+from typing import Any, NoReturn, Sequence
 
 import click
 
 from bollard.image.base import group
 from bollard.utils import append_parameters, is_docker_ready, rebuild_args, run_docker
 
-_COLUMNS = {
-    # choice: output header, output align
-    "architecture": ("ARCH", "left"),
-    "created:iso": ("CREATED TIME", "right"),
-    "created": ("CREATED", "right"),
-    "digest": ("DIGEST", "left"),
-    "id": ("ID", "left"),
-    "name": ("NAME", "left"),
-    "os": ("OS", "left"),
-    "platform": ("PLATFORM", "left"),
-    "registry": ("REGISTRY", "left"),
-    "repo_tag": ("REPO TAG", "left"),
-    "repository": ("REPOSITORY", "left"),
-    "size": ("SIZE", "right"),
-    "tag": ("TAG", "left"),
-}
+_COLUMNS = [
+    "architecture",
+    "created:iso",
+    "created",
+    "digest",
+    "id",
+    "name",
+    "os",
+    "platform",
+    "registry",
+    "repo_tag",
+    "repository",
+    "size",
+    "tag",
+]
 
 _COLUMN_ALIAS = {
     "arch": "architecture",
@@ -34,8 +33,6 @@ _COLUMN_SET = {
     "default": ("id", "repository", "tag", "created", "size"),
     "compact": ("id", "repo_tag"),
 }
-
-_COLUMN_CHOICES = sorted(list(_COLUMNS) + list(_COLUMN_ALIAS) + list(_COLUMN_SET))
 
 logger = logging.getLogger(__name__)
 
@@ -62,14 +59,14 @@ class OrderByField(click.Choice):
 @click.option(
     "-C",
     "--column",
-    type=click.Choice(_COLUMN_CHOICES, False),
+    type=click.Choice(list(_COLUMNS) + list(_COLUMN_ALIAS) + list(_COLUMN_SET), False),
     metavar="COLUMN",
     multiple=True,
     help="Show column (multiple)",
 )
 @click.option(
     "--order-by",
-    type=OrderByField(_COLUMN_CHOICES, False),
+    type=OrderByField(list(_COLUMNS) + list(_COLUMN_ALIAS), False),
     metavar="COLUMN",
     help="Order the output by the column. "
     "Default in ascending, add minus as prefix for decending order",
@@ -150,6 +147,9 @@ def list_images(
        compact
           Converts to id and repo_tag
     """
+    from bollard.image.data import collect_fields
+    from bollard.image.display import print_table
+
     # check input & env
     if selector and extra.get("format"):
         logger.error("Selector are not supported to use with format")
@@ -179,8 +179,9 @@ def list_images(
         flag_quiet=extra.get("quiet"),
     )
 
-    data = collect_fields(image_ids, columns, use_full_digest=extra.get("no_trunc"))
-    data = explode_dict(data)
+    data = collect_fields(
+        image_ids, columns, {"short_digest": not extra.get("no_trunc")}
+    )
 
     if order_by:
         desc, key = order_by
@@ -274,19 +275,16 @@ def list_images_fallback(values: dict) -> NoReturn:
 def select_images(
     selectors: Sequence[str], incl_interm_img: bool, filters: Sequence[str]
 ) -> list[str]:
-    from bollard.image.data import get_image_data, get_image_ids
+    from bollard.image.data import inspect_image, list_image_ids
     from bollard.image.selector import is_image_match_selector
 
     # get all image list
-    if filters:
-        image_ids = get_image_ids(incl_interm_img=incl_interm_img, filters=filters)
-    else:
-        image_ids = get_image_ids(incl_interm_img=incl_interm_img)
+    image_ids = list_image_ids(incl_interm_img=incl_interm_img, filters=filters)
 
     # apply selectors
     if selectors:
         selected = []
-        for data in get_image_data(image_ids):
+        for data in inspect_image(image_ids):
             is_match = True
             for selector in selectors:
                 if not is_image_match_selector(data, selector):
@@ -297,123 +295,6 @@ def select_images(
         image_ids = selected
 
     return image_ids
-
-
-def collect_fields(
-    image_ids: Sequence[str], columns: Sequence[str], use_full_digest: bool
-) -> list[dict]:
-    import bollard.image.data
-
-    # query once for caching the data
-    bollard.image.data.get_image_data(image_ids)
-
-    output = []
-    for id_ in image_ids:
-        collected = {}
-        for c in columns:
-            collected[c] = list(get_field_data(id_, c, use_full_digest))
-        output.append(collected)
-
-    return output
-
-
-def get_field_data(
-    image_id: str, column: str, use_full_digest: bool = False
-) -> Iterator[str]:
-    import bollard.image.data
-    from bollard.utils import (
-        format_digest,
-        format_iso_time,
-        format_relative_time,
-        format_size,
-        split_repo_tag,
-    )
-
-    (data,) = bollard.image.data.get_image_data([image_id])
-    match column:
-        case "architecture":
-            yield highlight_arch(data["Architecture"])
-        case "created:iso":
-            yield format_iso_time(data["Created"])
-        case "created":
-            yield format_relative_time(data["Created"])
-        case "digest":
-            for d in data["RepoDigests"]:
-                d: str
-                _, digest = d.split("@", maxsplit=1)
-                yield format_digest(digest, use_full_digest)
-        case "id":
-            yield format_digest(data["Id"], use_full_digest)
-        case "name":
-            for s in data["RepoTags"]:
-                _, name, _ = split_repo_tag(s)
-                yield name
-        case "os":
-            yield data["Os"]
-        case "platform":
-            (arch,) = get_field_data(image_id, "architecture")
-            (os,) = get_field_data(image_id, "os")
-            yield f"{os}/{arch}"
-        case "registry":
-            for s in data["RepoTags"]:
-                registry, _, _ = split_repo_tag(s)
-                yield registry
-        case "repo_tag":
-            for repo, tag in zip(
-                get_field_data(image_id, "repository"), get_field_data(image_id, "tag")
-            ):
-                yield f"{repo}:{tag}"
-        case "repository":
-            for s in data["RepoTags"]:
-                registry, name, _ = split_repo_tag(s)
-                if registry:
-                    yield f"{registry}/{name}"
-                else:
-                    yield name
-        case "size":
-            yield format_size(data["Size"])
-        case "tag":
-            for s in data["RepoTags"]:
-                _, _, tag = split_repo_tag(s)
-                yield tag
-        case _:
-            logger.critical("Internal error - Unmapped column %s", column)
-
-
-def highlight_arch(arch: str) -> str:
-    """Highlight arch string if it does not match current machine"""
-    import platform
-
-    if platform.machine().upper() == arch.upper():
-        return arch
-    return click.style(arch, fg="yellow", bold=True)
-
-
-def explode_dict(compressed_dict: list[dict]) -> list[dict[str, str]]:
-    output = []
-    for data in compressed_dict:
-        # categorize
-        col_unique = {}
-        col_zipped = {}
-        for c, v in data.items():
-            if not v:
-                col_unique[c] = None
-            elif len(v) == 1:
-                (col_unique[c],) = v
-            else:
-                col_zipped[c] = v
-
-        # explode
-        if col_zipped:
-            for fv in itertools.zip_longest(*col_zipped.values()):
-                d = col_unique.copy()
-                for c, v in zip(col_zipped, fv):
-                    d[c] = v
-                output.append(d)
-        else:
-            output.append(col_unique)
-
-    return output
 
 
 def parse_top_n_arg(selectors: Sequence[str]) -> tuple[Sequence[str], int]:
@@ -443,35 +324,3 @@ def order_dict(data: list[dict], column: str, desc: bool) -> list[str]:
             return (not desc, v)
 
     return sorted(data, key=_get_key, reverse=desc)
-
-
-def print_table(column: Sequence[str], data: list[dict]):
-    import tabulate
-
-    # build header
-    headers = []
-    colalign = []
-    for c in column:
-        text, align = _COLUMNS[c]
-        headers.append(click.style(text, bold=True))
-        colalign.append(align)
-
-    # build rows
-    empty_marker = click.style("-", fg="white", dim=True)
-    rows = []
-    for d in data:
-        rows.append([(d[c] or empty_marker) for c in column])
-
-    if not rows:
-        row_empty = [None] * len(column)
-        row_empty[0] = click.style("no data", fg="yellow", dim=True)
-        rows = [row_empty]
-
-    # print
-    table = tabulate.tabulate(
-        tablefmt="plain",
-        headers=headers,
-        colalign=colalign,
-        tabular_data=rows,
-    )
-    click.echo(table)

@@ -1,6 +1,11 @@
 import bollard.image.ls
+import bollard.image.rm
 from bollard.core import main as _main
 from bollard.image.base import group
+
+# aliases
+_main.add_alias("images", ["image", "ls"])
+_main.add_alias("rmi", ["image", "rm"])
 
 # unwrapped targets
 group.add_unwrapped_targets(
@@ -21,6 +26,3 @@ group.add_unwrapped_targets(
         # fmt: on
     ]
 )
-
-# aliases
-_main.add_alias("images", ["image", "ls"])

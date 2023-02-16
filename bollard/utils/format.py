@@ -21,11 +21,11 @@ def format_relative_time(s: typing.Union[str, "datetime.datetime"]) -> str:
     return humanize.naturaltime(now - t)
 
 
-def format_digest(s: str, use_full_digest: bool) -> str:
-    if use_full_digest:
-        return s
-    s = s.removeprefix("sha256:")
-    return s[:12]  # align docker's default config
+def format_digest(s: str, short: bool) -> str:
+    if short:
+        s = s.removeprefix("sha256:")
+        return s[:12]  # align docker's default length
+    return s
 
 
 def _to_time_object(s: str) -> "datetime.datetime":

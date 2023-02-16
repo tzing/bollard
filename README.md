@@ -22,3 +22,4 @@ For the rest of commands, arguments are passed to docker without any modificatio
 The only wrapped command:
 
 - `docker image ls`
+- `docker image rm`
