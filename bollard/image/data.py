@@ -19,11 +19,11 @@ def list_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> li
     data_bytes = check_docker_output(args, use_context=False)
     data_str = data_bytes.rstrip().decode()
 
-    # output id from docker could be duplicated, so dedup
-    unique_id_collection = {}  # dict is ordered
+    # output id from docker could be duplicated
+    # builtin dict is ordered, use it to preserve the order
+    unique_id_collection = {}
     for id_ in data_str.splitlines():
         unique_id_collection[id_] = None
-
     return list(unique_id_collection)
 
 

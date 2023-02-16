@@ -155,7 +155,7 @@ def interactive_select(
     if multi:
         args += ["--multi"]
     if header:
-        args += ["--header-first", "--header", header]
+        args += ["--header", header]
     if prompt:
         args += ["--prompt", prompt]
 

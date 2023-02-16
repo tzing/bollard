@@ -75,42 +75,43 @@ def select_images(selectors: Sequence[str]) -> list[str]:
     return selected
 
 
-def interactive_select_image() -> list[str]:
+def interactive_select_image() -> set[str]:
     from gettext import gettext as t
 
     from bollard.image.data import collect_fields, list_image_ids
     from bollard.image.display import build_table
     from bollard.utils import interactive_select
 
-    COLUMNS = ["id", "size", "repo_tag"]
+    COLUMNS = ["id", "size", "created", "repo_tag"]
 
     # get data
     image_ids = list_image_ids()
     image_data = collect_fields(image_ids, COLUMNS)
 
     # format into colored table
+    last_id = None
     for data in image_data:
-        data["id"] = click.style(data["id"], fg="cyan", bold=True)
+        is_duplicated = (id_ := data["id"]) == last_id
+        last_id = id_
+
+        data["id"] = click.style(
+            data["id"], fg="cyan" if not is_duplicated else "blue", bold=True
+        )
         data["size"] = click.style(data["size"], fg="yellow", dim=True)
 
-    rows = build_table(COLUMNS, image_data, False).splitlines()
+    head, *rows = build_table(COLUMNS, image_data).splitlines()
 
     # call fzf
     selected = interactive_select(
-        rows,
-        header=t(
-            "Press {tab} to select image(s) to be removed, {enter} to continue."
-        ).format(
-            tab=click.style("<tab>", fg="magenta", dim=True),
-            enter=click.style("<enter>", fg="magenta", dim=True),
-        ),
-        prompt=t("remove image >"),
+        prompt=t("Tab to select images to remove, enter to continue."),
+        header=head,
+        items=rows,
     )
 
     # extract id
-    output = []
+    output = set()
     for line in selected:
         id_, _ = line.split(maxsplit=1)
-        output.append(id_)
+        output.add(id_)
 
     return output
