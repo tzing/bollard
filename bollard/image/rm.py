@@ -28,10 +28,11 @@ def remove_images(selector: Sequence[str], yes: bool, **extra):
     if selector:
         images = select_images(selector)
     else:
-        raise NotImplementedError
+        images = interactive_select_image()
 
     if not images:
-        click.echo(t("No image to be removed"))
+        msg = click.style(t("No image to be removed"), fg="yellow", bold=True)
+        click.echo(msg, err=True)
         sys.exit(0)
 
     # show image
@@ -72,3 +73,44 @@ def select_images(selectors: Sequence[str]) -> list[str]:
                 break
 
     return selected
+
+
+def interactive_select_image() -> list[str]:
+    from gettext import gettext as t
+
+    from bollard.image.data import collect_fields, list_image_ids
+    from bollard.image.display import build_table
+    from bollard.utils import interactive_select
+
+    COLUMNS = ["id", "size", "repo_tag"]
+
+    # get data
+    image_ids = list_image_ids()
+    image_data = collect_fields(image_ids, COLUMNS)
+
+    # format into colored table
+    for data in image_data:
+        data["id"] = click.style(data["id"], fg="cyan", bold=True)
+        data["size"] = click.style(data["size"], fg="yellow", dim=True)
+
+    rows = build_table(COLUMNS, image_data, False).splitlines()
+
+    # call fzf
+    selected = interactive_select(
+        rows,
+        header=t(
+            "Press {tab} to select image(s) to be removed, {enter} to continue."
+        ).format(
+            tab=click.style("<tab>", fg="magenta", dim=True),
+            enter=click.style("<enter>", fg="magenta", dim=True),
+        ),
+        prompt=t("remove image >"),
+    )
+
+    # extract id
+    output = []
+    for line in selected:
+        id_, _ = line.split(maxsplit=1)
+        output.append(id_)
+
+    return output
