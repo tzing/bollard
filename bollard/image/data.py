@@ -18,7 +18,8 @@ def list_image_ids(incl_interm_img: bool = False, filters: list[str] = ()) -> li
         args += ["--filter", f]
     data_bytes = check_docker_output(args, use_context=False)
     data_str = data_bytes.rstrip().decode()
-    return data_str.splitlines()
+    ids = list(set(data_str.splitlines()))
+    return ids
 
 
 def inspect_image(image_ids: list[str]) -> list[dict[str, Any]]:
