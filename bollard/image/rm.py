@@ -91,13 +91,18 @@ def interactive_select_image() -> set[str]:
     # format into colored table
     last_id = None
     for data in image_data:
+        # sometimes one image have multiple name and tags
+        # check if image on current row is the same as last row
         is_duplicated = (id_ := data["id"]) == last_id
         last_id = id_
 
-        data["id"] = click.style(
-            data["id"], fg="cyan" if not is_duplicated else "blue", bold=True
-        )
-        data["size"] = click.style(data["size"], fg="yellow", dim=True)
+        if is_duplicated:
+            # set these fields to gray for duplicated image
+            for field in ("id", "size", "created"):
+                data[field] = click.style(data[field], fg=242)
+        else:
+            data["id"] = click.style(data["id"], fg="cyan", bold=True)
+            data["size"] = click.style(data["size"], fg="yellow", dim=True)
 
     head, *rows = build_table(COLUMNS, image_data).splitlines()
 
