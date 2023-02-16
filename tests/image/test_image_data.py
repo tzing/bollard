@@ -159,6 +159,7 @@ def test_explode_rows(source: dict, expect: list):
     [
         ("architecture", ["arm64"]),
         ("created", ["3 seconds ago"]),
+        ("created:iso", ["2099-01-01..."]),
         ("digest", ["bbbb"]),
         ("id", ["aaaa"]),
         ("name", ["name", "foo"]),
@@ -173,7 +174,11 @@ def test_explode_rows(source: dict, expect: list):
 )
 @pytest.mark.usefixtures("_patch_inspect")
 def test_get_field_data(column: str, output: list):
-    assert list(t.get_field_data("sha256:aaaa", column)) == output
+    with (
+        patch.object(t, "get_architecture", return_value="arm64"),
+        patch("bollard.utils.format_iso_time", return_value="2099-01-01..."),
+    ):
+        assert list(t.get_field_data("sha256:aaaa", column)) == output
 
 
 def test_get_architecture():
